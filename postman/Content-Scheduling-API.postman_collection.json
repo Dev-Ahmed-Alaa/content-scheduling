@@ -1,0 +1,189 @@
+{
+    "info": {
+        "name": "Content Scheduling API",
+        "description": "API for scheduling social media posts across multiple platforms.\n\n**Test Users (password: `password`):**\n- test@example.com\n- demo@example.com\n- power@example.com\n- admin@example.com",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {"key": "base_url", "value": "http://localhost:8000/api", "type": "string"},
+        {"key": "token", "value": "", "type": "string"}
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+    },
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "event": [{"listen": "test", "script": {"exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('token', pm.response.json().data.token); }"], "type": "text/javascript"}}],
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "POST",
+                        "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+                        "body": {"mode": "raw", "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}"},
+                        "url": {"raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"]}
+                    }
+                },
+                {
+                    "name": "Login",
+                    "event": [{"listen": "test", "script": {"exec": ["if (pm.response.code === 200) { pm.collectionVariables.set('token', pm.response.json().data.token); }"], "type": "text/javascript"}}],
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "POST",
+                        "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+                        "body": {"mode": "raw", "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password\"\n}"},
+                        "url": {"raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"]}
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User",
+            "item": [
+                {
+                    "name": "Get Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/user", "host": ["{{base_url}}"], "path": ["user"]}
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+                        "body": {"mode": "raw", "raw": "{\n    \"name\": \"Updated Name\"\n}"},
+                        "url": {"raw": "{{base_url}}/user", "host": ["{{base_url}}"], "path": ["user"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Platforms",
+            "item": [
+                {
+                    "name": "List Platforms",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/platforms", "host": ["{{base_url}}"], "path": ["platforms"]}
+                    }
+                },
+                {
+                    "name": "Toggle Platform",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/platforms/1/toggle", "host": ["{{base_url}}"], "path": ["platforms", "1", "toggle"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Posts",
+            "item": [
+                {
+                    "name": "List Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {
+                            "raw": "{{base_url}}/posts?status=&date_from=&date_to=&per_page=15",
+                            "host": ["{{base_url}}"],
+                            "path": ["posts"],
+                            "query": [
+                                {"key": "status", "value": "", "description": "draft, scheduled, published"},
+                                {"key": "date_from", "value": "", "description": "YYYY-MM-DD"},
+                                {"key": "date_to", "value": "", "description": "YYYY-MM-DD"},
+                                {"key": "per_page", "value": "15"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+                        "body": {"mode": "raw", "raw": "{\n    \"title\": \"My Post Title\",\n    \"content\": \"Post content goes here\",\n    \"image_url\": null,\n    \"status\": \"scheduled\",\n    \"scheduled_time\": \"2025-12-20T14:00:00Z\",\n    \"platform_ids\": [1, 2]\n}"},
+                        "url": {"raw": "{{base_url}}/posts", "host": ["{{base_url}}"], "path": ["posts"]}
+                    }
+                },
+                {
+                    "name": "Get Post",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/posts/1", "host": ["{{base_url}}"], "path": ["posts", "1"]}
+                    }
+                },
+                {
+                    "name": "Update Post",
+                    "request": {
+                        "method": "PUT",
+                        "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+                        "body": {"mode": "raw", "raw": "{\n    \"title\": \"Updated Title\",\n    \"content\": \"Updated content\",\n    \"status\": \"scheduled\",\n    \"scheduled_time\": \"2025-12-25T10:00:00Z\",\n    \"platform_ids\": [1, 2]\n}"},
+                        "url": {"raw": "{{base_url}}/posts/1", "host": ["{{base_url}}"], "path": ["posts", "1"]}
+                    }
+                },
+                {
+                    "name": "Delete Post",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/posts/1", "host": ["{{base_url}}"], "path": ["posts", "1"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics",
+            "item": [
+                {
+                    "name": "Overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/analytics/overview", "host": ["{{base_url}}"], "path": ["analytics", "overview"]}
+                    }
+                },
+                {
+                    "name": "Platform Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/analytics/platforms", "host": ["{{base_url}}"], "path": ["analytics", "platforms"]}
+                    }
+                },
+                {
+                    "name": "Timeline",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept", "value": "application/json"}],
+                        "url": {
+                            "raw": "{{base_url}}/analytics/timeline?from=&to=",
+                            "host": ["{{base_url}}"],
+                            "path": ["analytics", "timeline"],
+                            "query": [
+                                {"key": "from", "value": "", "description": "YYYY-MM-DD (default: 30 days ago)"},
+                                {"key": "to", "value": "", "description": "YYYY-MM-DD (default: today)"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

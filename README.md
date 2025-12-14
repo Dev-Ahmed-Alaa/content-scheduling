@@ -1,59 +1,282 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Content Scheduling API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel-based backend API for scheduling and managing social media posts across multiple platforms.
 
-## About Laravel
+## Table of Contents
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+-   [Installation](#installation)
+-   [Database](#database)
+-   [API Endpoints](#api-endpoints)
+-   [Postman Collection](#postman-collection)
+-   [Running the Application](#running-the-application)
+-   [Approach & Architecture](#approach--architecture)
+-   [Trade-offs & Decisions](#trade-offs--decisions)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Installation
 
-## Learning Laravel
+### Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+-   PHP 8.3+
+-   Composer
+-   MySQL
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Setup Steps
 
-## Laravel Sponsors
+```bash
+# 1. Clone the repository
+git clone https://github.com/Dev-Ahmed-Alaa/content-scheduling
+cd content-scheduling
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 2. Install dependencies
+composer install
 
-### Premium Partners
+# 3. Environment setup
+cp .env.example .env
+php artisan key:generate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 4. Configure database in .env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=content_scheduling
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Contributing
+# 5. Run migrations and seeders
+php artisan migrate:fresh --seed
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 6. Start the server
+php artisan serve
+```
 
-## Code of Conduct
+The API will be available at `http://localhost:8000/api`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Database
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Migrations
+
+| Migration                    | Table           | Description                                                                 |
+| ---------------------------- | --------------- | --------------------------------------------------------------------------- |
+| `create_users_table`         | `users`         | User accounts (id, name, email, password)                                   |
+| `create_platforms_table`     | `platforms`     | Social media platforms (id, name, type, character_limit)                    |
+| `create_posts_table`         | `posts`         | User posts (id, title, content, image_url, scheduled_time, status, user_id) |
+| `create_post_platform_table` | `post_platform` | Pivot: post-platform relationship with per-platform status                  |
+| `create_user_platform_table` | `user_platform` | Pivot: which platforms each user has activated                              |
+
+### Schema Overview
+
+```
+users
+├── id, name, email, password, timestamps
+
+platforms
+├── id, name, type (x/instagram/linkedin/facebook), character_limit, is_active
+
+posts
+├── id, user_id (FK), title, content, image_url, scheduled_time, status, published_at, timestamps, soft_deletes
+
+post_platform (pivot)
+├── post_id (FK), platform_id (FK), platform_status (pending/published/failed), published_at, error_message
+
+user_platform (pivot)
+├── user_id (FK), platform_id (FK), is_active
+```
+
+### Seeders
+
+Run `php artisan db:seed` to populate the database with:
+
+**PlatformSeeder** - Creates 4 platforms:
+
+| Platform    | Type      | Character Limit |
+| ----------- | --------- | --------------- |
+| X (Twitter) | x         | 280             |
+| Instagram   | instagram | 2,200           |
+| LinkedIn    | linkedin  | 3,000           |
+| Facebook    | facebook  | 63,206          |
+
+**UserSeeder** - Creates 4 test users (password: `password`):
+
+| Email             | Active Platforms                                                |
+| ----------------- | --------------------------------------------------------------- |
+| test@example.com  | X, Instagram                                                    |
+| demo@example.com  | All 4 platforms                                                 |
+| power@example.com | LinkedIn, Facebook (8 posts scheduled - for rate limit testing) |
+| admin@example.com | All 4 platforms                                                 |
+
+**DemoDataSeeder** - Creates sample posts:
+
+-   Draft posts
+-   Scheduled posts (future dates)
+-   Published posts with platform statuses
+-   Historical data for analytics
+
+---
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint        | Description            |
+| ------ | --------------- | ---------------------- |
+| POST   | `/api/register` | Register new user      |
+| POST   | `/api/login`    | Login, returns token   |
+| POST   | `/api/logout`   | Logout (requires auth) |
+
+### User Profile
+
+| Method | Endpoint    | Description      |
+| ------ | ----------- | ---------------- |
+| GET    | `/api/user` | Get current user |
+| PUT    | `/api/user` | Update profile   |
+
+### Platforms
+
+| Method | Endpoint                     | Description              |
+| ------ | ---------------------------- | ------------------------ |
+| GET    | `/api/platforms`             | List all platforms       |
+| POST   | `/api/platforms/{id}/toggle` | Toggle platform for user |
+
+### Posts
+
+| Method | Endpoint          | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| GET    | `/api/posts`      | List posts (filters: status, date_from, date_to) |
+| POST   | `/api/posts`      | Create post                                      |
+| GET    | `/api/posts/{id}` | Get post                                         |
+| PUT    | `/api/posts/{id}` | Update post                                      |
+| DELETE | `/api/posts/{id}` | Delete post                                      |
+
+### Analytics
+
+| Method | Endpoint                   | Description                               |
+| ------ | -------------------------- | ----------------------------------------- |
+| GET    | `/api/analytics/overview`  | Total posts, drafts, scheduled, published |
+| GET    | `/api/analytics/platforms` | Posts per platform, success rates         |
+| GET    | `/api/analytics/timeline`  | Daily scheduled vs published counts       |
+
+---
+
+## Postman Collection
+
+The Postman collection is included in the project directory:
+
+```
+postman/Content-Scheduling-API.postman_collection.json
+```
+
+> **Note:** The collection is also attached in the submission email.
+
+**How to use:**
+
+1. Import the collection into Postman
+2. Run **Login** request (token auto-saves)
+3. Test any endpoint
+
+---
+
+## Running the Application
+
+### Development Server
+
+```bash
+php artisan serve
+```
+
+### Queue Worker (for publishing posts)
+
+```bash
+php artisan queue:work
+```
+
+### Process Scheduled Posts
+
+```bash
+# Manual run
+php artisan posts:publish-due
+
+# Or via scheduler (add to crontab)
+* * * * * cd /path-to-project && php artisan schedule:run
+```
+
+---
+
+## Approach & Architecture
+
+### Project Structure
+
+```
+app/
+├── Console/Commands/       # Artisan commands (ProcessScheduledPostsCommand)
+├── Contracts/              # Interfaces (Repository, Validator)
+├── Enums/                  # PostStatus, PlatformStatus, PlatformType
+├── Exceptions/             # Custom exceptions
+├── Http/
+│   ├── Controllers/Api/    # API controllers
+│   ├── Requests/           # Form request validation
+│   └── Resources/          # JSON response transformers
+├── Jobs/                   # PublishPostJob (queue)
+├── Models/                 # Eloquent models
+├── Policies/               # Authorization (PostPolicy)
+├── Repositories/           # Data access layer
+├── Services/               # Business logic layer
+└── Validators/Platforms/   # Platform-specific validators
+```
+
+### Design Patterns
+
+| Pattern           | Implementation                                                |
+| ----------------- | ------------------------------------------------------------- |
+| **Repository**    | Abstracts database operations (`EloquentPostRepository`)      |
+| **Service Layer** | Business logic in services (`PostService`, `PlatformService`) |
+| **Strategy**      | Platform validators (`XValidator`, `InstagramValidator`)      |
+| **Factory**       | Validator creation via IoC container                          |
+
+### SOLID Principles
+
+| Principle                 | How Applied                                               |
+| ------------------------- | --------------------------------------------------------- |
+| **Single Responsibility** | Controllers → HTTP, Services → Logic, Repositories → Data |
+| **Open/Closed**           | Add new platforms without modifying existing code         |
+| **Liskov Substitution**   | Repositories implement interfaces, swappable              |
+| **Interface Segregation** | Separate interfaces for different concerns                |
+| **Dependency Inversion**  | Services depend on interfaces, not implementations        |
+
+### Key Features
+
+1. **Platform-Specific Validation** - Each platform has character limits enforced via Strategy pattern
+2. **Rate Limiting** - Max 10 scheduled posts per day per user
+3. **Queue-Based Publishing** - Posts publish asynchronously via jobs
+4. **Per-Platform Status** - Track success/failure for each platform independently
+5. **Analytics** - Overview stats, platform performance, timeline data
+
+---
+
+## Trade-offs & Decisions
+
+| Decision                          | Rationale                                         |
+| --------------------------------- | ------------------------------------------------- |
+| **Soft deletes for posts**        | Maintains audit trail, analytics remain accurate  |
+| **Published posts are immutable** | Prevents inconsistency after social media publish |
+| **Pivot table for PostPlatform**  | One post can succeed on X but fail on Instagram   |
+| **Mock publishing (80% success)** | Simulates real API failures for testing           |
+| **Queue-based publishing**        | Scalable, non-blocking                            |
+| **Cache analytics (5 min)**       | Reduces database load                             |
+| **10 posts/day rate limit**       | Prevents abuse                                    |
+
+### Scalability Considerations
+
+-   **Database indexes** on `scheduled_time`, `status`, `user_id`
+-   **Queue workers** can scale horizontally
+-   **Cache locks** prevent duplicate job processing
+-   **Retry logic** with exponential backoff for failed publishes
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License

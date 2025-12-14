@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\PlatformStatus;
 use App\Enums\PostStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -81,15 +82,20 @@ class Post extends Model
     /**
      * Scope to filter by date range.
      */
-    public function scopeDateRange($query, ?string $from = null, ?string $to = null)
-    {
-        if ($from) {
-            $query->where('scheduled_time', '>=', $from);
-        }
-        if ($to) {
-            $query->where('scheduled_time', '<=', $to);
-        }
-        return $query;
+    public function scopeDateRange(
+        Builder $query,
+        ?string $from = null,
+        ?string $to = null
+    ): Builder {
+        return $query
+            ->when(
+                $from,
+                fn ($q) => $q->where('scheduled_time', '>=', $from)
+            )
+            ->when(
+                $to,
+                fn ($q) => $q->where('scheduled_time', '<=', $to)
+            );
     }
 
     /**
